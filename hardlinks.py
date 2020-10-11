@@ -25,7 +25,7 @@ def main(path_dir):
                 if val not in names:
                     os.remove(val)
                     os.link(lead, val)
-                    print(f"/{'/'.join(val.split('/')[-2:])} is hardlinked with /{'/'.join(lead.split('/')[-2:])}")
+                    print(f"{'/'.join(val.split('/')[-2:])} is hardlinked with {'/'.join(lead.split('/')[-2:])}")
 
 
 if __name__ == "__main__":
