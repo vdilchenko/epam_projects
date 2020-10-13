@@ -31,7 +31,8 @@ cur.execute("""
     crtc varchar(35) CHECK (crtc in ('', 'Closed with explanation', 'Closed', 'Closed with monetary relief', 'Closed with non-monetary relief', 'Untimely response')),
     timely_response varchar(3) CHECK (timely_response in ('Yes', 'No', '')),
     consumer_disputed varchar(3) CHECK (consumer_disputed in ('Yes', 'No', '')),
-    complaint_id numeric PRIMARY KEY
+    complaint_id numeric,
+    CONSTRAINT pk_complaint PRIMARY KEY (complaint_id)
 )
 """)
 conn.commit()
