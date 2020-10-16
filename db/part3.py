@@ -6,7 +6,12 @@ import argparse
 
 parser = argparse.ArgumentParser(
     description=u"""Allows to see issues and related attributes for the most issued state of the company""")
+parser.add_argument("dbname", type=str, metavar="DBNAME", help=u"Name of database")
+parser.add_argument("user", type=str, metavar="USERNAME", help=u"Username for auth.")
 parser.add_argument("company_name", type=str, metavar="COMPANY", help=u"Type company name")
+parser.add_argument("--password", type=str, required=False, metavar="PASSWORD", help=u"Password for auth.")
+parser.add_argument("--host", type=str, required=False, default="localhost", metavar="HOST", help=u"Database host")
+parser.add_argument("--port", type=str, required=False, default=5432, metavar="PORT", help=u"Database port")
 parser.add_argument("--output_size", type=int, default=10, required=False, metavar="OUTPUT_SIZE", help=u"Choose the amount of data to be displayed")
 parser.add_argument("--fetch_all", type=bool, default=False, metavar="FETCH_ALL", help=u"Choose to fetch each row or not")
 
@@ -32,12 +37,17 @@ def main(cur, conn, company, size, fetch_all):
     cur.execute("Select * FROM consumer_complaints LIMIT 0")
     colnames = [desc[0] for desc in cur.description]
     print(' | '.join(colnames))
-    print(rows)
+    for row in rows:
+        print(row)
+
 
 if __name__ == "__main__":
-    host = ""
-    db = ""
-    user = ""
+    args = parser.parse_args()
+    host = args.host
+    db = args.dbname
+    user = args.user
+    password = args.password
+    port = args.port
 
     args = parser.parse_args()
     company = args.company_name
@@ -45,7 +55,7 @@ if __name__ == "__main__":
     fetch = args.fetch_all
 
     try:
-        conn = psycopg2.connect(f"host={host} dbname={db} user={user}")
+        conn = psycopg2.connect(f"dbname={db} user={user} password={password} host={host} port={port}")
         cur = conn.cursor()
         main(cur, conn, company, size, fetch)
     except (Exception, psycopg2.Error) as error:

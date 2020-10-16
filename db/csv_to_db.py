@@ -1,6 +1,15 @@
  #!/usr/bin/env python3
 
 import psycopg2
+import argparse
+
+parser = argparse.ArgumentParser(
+    description=u"""Allows to create a table from CSV file""")
+parser.add_argument("dbname", type=str, metavar="DBNAME", help=u"Name of database")
+parser.add_argument("user", type=str, metavar="USERNAME", help=u"Username for auth.")
+parser.add_argument("--password", type=str, required=False, metavar="PASSWORD", help=u"Password for auth.")
+parser.add_argument("--host", type=str, required=False, default="localhost", metavar="HOST", help=u"Database host")
+parser.add_argument("--port", type=str, required=False, default=5432, metavar="PORT", help=u"Database port")
 
 
 def main(cur, conn, filename):
@@ -38,13 +47,16 @@ def main(cur, conn, filename):
 
 
 if __name__ == "__main__":
-    host = ""
-    db = ""
-    user = ""
+    args = parser.parse_args()
+    host = args.host
+    db = args.dbname
+    user = args.user
+    password = args.password
+    port = args.port
     filename = "P9-ConsumerComplaints.csv"
 
     try:
-        conn = psycopg2.connect(f"host={host} dbname={db} user={user}")
+        conn = psycopg2.connect(f"dbname={db} user={user} password={password} host={host} port={port}")
         cur = conn.cursor()
         main(cur, conn, filename)
     except (Exception, psycopg2.Error) as error:
