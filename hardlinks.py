@@ -1,6 +1,7 @@
 import os
 from collections import defaultdict
 import argparse
+import filecmp
 
 
 parser = argparse.ArgumentParser(description=u"""Allows to hardlink all the equal files in the directory""")
@@ -17,12 +18,10 @@ def main(path_dir):
         exit("No equal matches found")
 
     for k in filenames.keys():
-        names = []
         if len(filenames[k]) > 1:
             lead = filenames[k][0]
-            names.append(lead)
             for val in filenames[k]:
-                if val not in names:
+                if val != lead and filecmp.cmp(lead, val):
                     os.remove(val)
                     os.link(lead, val)
                     print(f"{'/'.join(val.split('/')[-2:])} is hardlinked with {'/'.join(lead.split('/')[-2:])}")
