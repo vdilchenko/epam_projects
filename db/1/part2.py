@@ -1,8 +1,10 @@
  #!/usr/bin/env python3
 
 import psycopg2
+from psycopg2 import errorcodes
 import argparse
 from datetime import datetime
+import re
 
 
 parser = argparse.ArgumentParser(
@@ -24,7 +26,7 @@ def main(cur, conn, start_date, end_date):
             count(issue) issues,
             count(issue) filter (where timely_response = 'Yes') as issues_done_timely,
             count(issue) filter (where consumer_disputed = 'Yes') as issues_disputed
-        from consumer_complaints 
+        from consumer_complaints
         where date_received >= '{}' and date_received <= '{}'
         group by product_name
         order by issues desc
@@ -42,8 +44,10 @@ if __name__ == "__main__":
     user = args.user
     password = args.password
     port = args.port
-
-    args = parser.parse_args()
+    
+    pattern='(?:[0-9]{2}(/|-)){2}[0-9]{2}'
+    assert re.search(pattern, args.start_date), 'Bad input for start date'
+    assert re.search(pattern, args.end_date), 'Bad input for end date'
     start_date = datetime.strptime(args.start_date, "%Y-%m-%d")
     end_date = datetime.strptime(args.end_date, "%Y-%m-%d")
 
@@ -51,9 +55,13 @@ if __name__ == "__main__":
         conn = psycopg2.connect(f"dbname={db} user={user} password={password} host={host} port={port}")
         cur = conn.cursor()
         main(cur, conn, start_date, end_date)
-    except (Exception, psycopg2.Error) as error:
-        print("Error while fetching data from PostgreSQL\n", error)
+    except psycopg2.errors.UndefinedTable as error:
+        print('No such table\n', error.pgerror)
+    except psycopg2.OperationalError as error:
+        print('Unable to connect\n', error)
+        conn = None
     finally:
         if(conn):
             cur.close()
             conn.close()
+            print('Disconnected')

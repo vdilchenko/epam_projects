@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
 import argparse
+import sqlalchemy
 from sqlalchemy import create_engine
 
 
@@ -14,7 +15,7 @@ parser.add_argument("--host", type=str, required=False, default="localhost", met
 parser.add_argument("--port", type=str, required=False, default=5432, metavar="PORT", help=u"Database port")
     
 
-def main(conn, filename, somestring):
+def main(conn, somestring):
     somestring = somestring.replace(" ", "|")
     query = conn.execute("""
         SELECT movie_title, actor_1_name, genres, imdb_score
@@ -34,15 +35,18 @@ if __name__ == "__main__":
     user = args.user
     password = args.password
     port = args.port
-    filename = "movie_metadata.csv"
     somestring = args.string
 
     try:
         engine = create_engine(f'postgresql://{user}:{password}@{host}:{port}/{db}')
         conn = engine.connect()
-        main(conn, filename, somestring)
-    except (Exception) as error:
-        print("Error while working with PostgreSQL", error)
+        main(conn, somestring)
+    except sqlalchemy.exc.ProgrammingError as error:
+        print('Error while fetching data from PostgreSQL\n', error)
+    except sqlalchemy.exc.OperationalError as error:
+        print('Unable to connect\n', error)
+        conn = None
     finally:
         if(conn):
             conn.close()
+            print('Disconnected')

@@ -40,10 +40,23 @@ def main(cur, conn, filename):
     """)
     conn.commit()
 
+    cur.execute("""
+        SELECT count(1) FROM consumer_complaints
+    """)
+    conn.commit()
+    table_count = cur.fetchone()
+    assert table_count[0] == 0, 'table has data in it'
+
     sql = "COPY consumer_complaints FROM STDIN DELIMITER ',' CSV HEADER"
     with open(filename, "r") as f:
         cur.copy_expert(sql, f)
     conn.commit()
+
+    cur.execute("SELECT count(*) FROM consumer_complaints;")
+    conn.commit()
+
+    table_count = cur.fetchone()
+    assert table_count[0] != 0, 'Table has no data in it'
 
 
 if __name__ == "__main__":
@@ -59,9 +72,11 @@ if __name__ == "__main__":
         conn = psycopg2.connect(f"dbname={db} user={user} password={password} host={host} port={port}")
         cur = conn.cursor()
         main(cur, conn, filename)
-    except (Exception, psycopg2.Error) as error:
-        print("Error while working with PostgreSQL", error)
+    except psycopg2.OperationalError as error:
+        print('Unable to connect\n', error)
+        conn = None
     finally:
         if(conn):
             cur.close()
             conn.close()
+            print('Disconnected')

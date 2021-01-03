@@ -2,6 +2,7 @@
 
 import argparse
 import pandas as pd
+import sqlalchemy
 from sqlalchemy import Table, Column, Numeric, String, MetaData, create_engine
 
 
@@ -26,10 +27,13 @@ def main(conn, filename):
     )
     meta.create_all(conn)
 
-    my_csv = pd.read_csv(filename, sep=',',
-        usecols=['movie_title', 'actor_1_name', 'genres', 'imdb_score'])
-    my_csv = my_csv[['movie_title', 'actor_1_name', 'genres', 'imdb_score']]
-    my_csv.to_sql('imdb_movies', conn, index=False, if_exists='append')
+    try:
+        my_csv = pd.read_csv(filename, sep=',',
+            usecols=['movie_title', 'actor_1_name', 'genres', 'imdb_score'])
+        my_csv = my_csv[['movie_title', 'actor_1_name', 'genres', 'imdb_score']]
+        my_csv.to_sql('imdb_movies', conn, index=False, if_exists='append')
+    except FileNotFoundError:
+        print('No such file')
 
 
 if __name__ == "__main__":
@@ -45,8 +49,10 @@ if __name__ == "__main__":
         engine = create_engine(f'postgresql://{user}:{password}@{host}:{port}/{db}')
         conn = engine.connect()
         main(conn, filename)
-    except (Exception) as error:
-        print("Error while working with PostgreSQL", error)
+    except sqlalchemy.exc.OperationalError as error:
+        print('Unable to connect\n', error)
+        conn = None
     finally:
         if(conn):
             conn.close()
+            print('Disconnected')

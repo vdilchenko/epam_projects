@@ -49,7 +49,8 @@ if __name__ == "__main__":
     password = args.password
     port = args.port
 
-    args = parser.parse_args()
+    assert isinstance(args.output_size, int), 'Output size is not a number'
+    assert isinstance(args.fetch_all, bool), 'Arg fetch_all is not a boolean'
     company = args.company_name
     size = args.output_size
     fetch = args.fetch_all
@@ -58,9 +59,13 @@ if __name__ == "__main__":
         conn = psycopg2.connect(f"dbname={db} user={user} password={password} host={host} port={port}")
         cur = conn.cursor()
         main(cur, conn, company, size, fetch)
-    except (Exception, psycopg2.Error) as error:
-        print("Error while fetching data from PostgreSQL\n", error)
+    except psycopg2.errors.UndefinedTable as error:
+        print('No such table\n', error.pgerror)
+    except psycopg2.OperationalError as error:
+        print('Unable to connect\n', error)
+        conn = None
     finally:
         if(conn):
             cur.close()
             conn.close()
+            print('Disconnected')

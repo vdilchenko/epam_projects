@@ -1,7 +1,9 @@
 #! /usr/bin/env python3
 
 import argparse
+import sqlalchemy
 from sqlalchemy import create_engine
+import re
 
 
 parser = argparse.ArgumentParser(
@@ -15,7 +17,7 @@ parser.add_argument("--host", type=str, required=False, default="localhost", met
 parser.add_argument("--port", type=str, required=False, default=5432, metavar="PORT", help=u"Database port")
     
 
-def main(conn, filename, somestring, genre):
+def main(conn, somestring, genre):
     somestring = somestring.replace(" ", "|")
     genre = genre.replace(" ", "&")
 
@@ -37,16 +39,22 @@ if __name__ == "__main__":
     user = args.user
     password = args.password
     port = args.port
-    filename = "movie_metadata.csv"
     somestring = args.string
+    
+    pattern = re.compile('[A-Za-z]+')
+    assert pattern.fullmatch(args.genre), 'Bad input for genre'
     genre = args.genre
 
     try:
         engine = create_engine(f'postgresql://{user}:{password}@{host}:{port}/{db}')
         conn = engine.connect()
-        main(conn, filename, somestring, genre)
-    except (Exception) as error:
-        print("Error while working with PostgreSQL", error)
+        main(conn, somestring, genre)
+    except sqlalchemy.exc.ProgrammingError as error:
+        print('Error while fetching data from PostgreSQL\n', error)
+    except sqlalchemy.exc.OperationalError as error:
+        print('Unable to connect\n', error)
+        conn = None
     finally:
         if(conn):
             conn.close()
+            print('Disconnected')
