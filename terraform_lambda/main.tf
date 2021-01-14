@@ -6,20 +6,29 @@ variable "bucket_name" {
 
 variable "sg_name" {
     type      = string
-    default   = "rds_access_group" 
+    default   = "rds-access-group" 
 }
 
 variable "db_instance_name" {
     type      = string
-    default   = "somedbinstancename"
+    default   = "dbinstancename"
 }
 
+variable "db_username" {
+    type      = string
+    default   = "dbusername"
+}
+
+variable "db_password" {
+    type      = string
+    default   = "dbpassword"
+}
+
+variable "db_name" {
+    type      = string
+    default   = "databasename"
+}
 ### PROVIDERS
-provider "aws" {
-    alias  = "north"
-    region = "eu-north-1"
-}
-
 provider "aws" {
     alias  = "uswest"
     region = "us-west-1"
@@ -98,6 +107,15 @@ resource "aws_lambda_function" "terraform_lambda" {
     memory_size   = 256
     timeout       = 15
     runtime       = "python3.8"
+    environment {
+        variables = {
+            db_username    = var.db_username
+            db_password    = var.db_password
+            db_name        = var.db_name
+            db_instance    = var.db_instance_name
+            bucket_name    = var.bucket_name
+        }
+    }
 }
 
 resource "aws_lambda_permission" "allow_bucket" {
@@ -175,9 +193,9 @@ resource "aws_db_instance" "postgresdb" {
     engine               = "postgres"
     engine_version       = "12.4"
     instance_class       = "db.t2.micro"
-    name                 = "mydb"
-    username             = "admin1"
-    password             = "foo123bar"
+    name                 = var.db_name
+    username             = var.db_username
+    password             = var.db_password
     publicly_accessible  = true
     skip_final_snapshot  = true
     apply_immediately    = true
