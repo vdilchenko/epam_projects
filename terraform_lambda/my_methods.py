@@ -36,17 +36,14 @@ def write_df_to_s3(s3, bucket_name, df, name):
     return f'Saved {filename} on S3'
 
 
-def write_df_to_db(df, db_instance):
+def write_df_to_db(df, db_instance, user, password, db_name):
     """
         Writes given DataFrame to AWS RDS.
     """
     host = db_instance['Address']
     port = db_instance['Port']
-    user = 'admin1'
-    passw = 'foo123bar'
-    database = 'mydb'
 
-    mydb = create_engine(f'postgres://{user}:{passw}@{host}:{port}/{database}',
+    mydb = create_engine(f'postgres://{user}:{password}@{host}:{port}/{db_name}',
                          echo=False)
     df.to_sql('bank_table', mydb, if_exists='replace', index=False)
 
