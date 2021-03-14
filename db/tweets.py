@@ -38,7 +38,7 @@ def main(tweets, columns, cur, conn):
 
 if __name__ == "__main__":
     tweets_path = "/Users/ilchenkoslava/Downloads/test dwh engineer/three_minutes_tweets.json"
-    tweets = (json.loads(tweet) for tweet in open(tweets_path, "r"))
+    tweets = (json.loads(tweet) for tweet in open(tweets_path, "r", encoding='utf-8'))
 
     columns = ["name", "text", "country_code", "display_url",
                "lang", "created_at", "location"]
