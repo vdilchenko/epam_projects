@@ -1,0 +1,39 @@
+create table Tweet (id integer primary key autoincrement, name text, tweet_text text, country_code text,
+					display_url text, lang text, created_at timestamp,
+					location text);
+alter table Tweet add column tweet_sentiment float;
+
+
+create table languages (id integer primary key autoincrement, lang text);
+insert into languages(lang) select DISTINCT lang from Tweet;
+
+create table texts (id integer primary key autoincrement, tweet_text text, lang_id integer,
+	constraint fk_lang_id foreign key (lang_id) references languages(id));
+insert into texts (tweet_text, lang_id) 
+	select t.tweet_text, l.id from Tweet t 
+	join languages l on l.lang = t.lang;
+
+
+create table tweets (id integer primary key autoincrement, name text, country_code text, 
+						created_at timestamp,  display_url text, location text,  text_id integer, tweet_sentiment float,
+						constraint fk_text_id foreign key (text_id) references tweet_texts(id));
+insert into tweets (name, country_code, created_at, display_url, location, text_id)
+	select t.name, t.country_code, t.created_at, t.display_url, t.location, tt.id from Tweet1 t 
+	join texts tt on t.id = tt.id;
+
+
+with t4 as (
+select 
+	country_code,
+	name,
+	SUM(tweet_sentiment) over (partition by country_code order by country_code desc) sum_ts_code,
+	SUM(tweet_sentiment) over (partition by name order by name desc) sum_ts_name
+	from tweets)
+select "max" 'min/max', COALESCE(country_code, NULL) result,  max(sum_ts_code) happiness from t4 where country_code is not null
+union 
+select "min" 'min/max', COALESCE(country_code, NULL) result, min(sum_ts_code) happiness from t4 where country_code is not null
+union
+select "max" 'min/max', COALESCE(country_code, name) result, max(sum_ts_name) happiness from t4 where name is not null
+union 
+select "min" 'min/max', COALESCE(country_code, name) result, min(sum_ts_name) happiness from t4 where name is not null;
+
